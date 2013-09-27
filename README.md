@@ -1,4 +1,4 @@
 jshell
 ======
 
-jshell language parser
+toy language for fun
