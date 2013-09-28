@@ -23,6 +23,10 @@ public class FunctionInvocationExpression extends AbstractExpression {
         }
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     protected Value doEvaluate(JShellContext context) throws Exception {
         Function function = context.getFunction(name);
@@ -42,6 +46,10 @@ public class FunctionInvocationExpression extends AbstractExpression {
 
     @Override
     public void visit(Visitor visitor) throws VisitNodeException {
-
+        visitor.start(this);
+        for (Expression expression : arguments) {
+            expression.visit(visitor);
+        }
+        visitor.finish(this);
     }
 }
