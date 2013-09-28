@@ -61,33 +61,33 @@ public class AbstractJShellParser {
         return tokens.get(position - offset);
     }
 
-    protected interface Action {
-        Object execute(final List<Token> tokens) throws JShellParseException;
+    protected interface Action<T> {
+        T execute(final List<Token> tokens) throws JShellParseException;
     }
 
-    protected Result consume(final List<Token> tokens, final Action action) {
+    protected <T> Result<T> consume(final List<Token> tokens, final Action<T> action) {
         positions.push(position);
 
         try {
-            Object value = action.execute(tokens);
+            T value = action.execute(tokens);
             positions.pop();
-            return new Result(value, true);
+            return new Result<T>(value, true);
         } catch (JShellParseException ex) {
             position = positions.pop();
-            return new Result(null, false);
+            return new Result<T>(null, false);
         }
     }
 
-    protected final class Result {
-        private Object value;
+    protected final class Result<T> {
+        private T value;
         private boolean ok;
 
-        private Result(Object value, boolean ok) {
+        private Result(T value, boolean ok) {
             this.value = value;
             this.ok = ok;
         }
 
-        public Object value() {
+        public T value() {
             return value;
         }
 

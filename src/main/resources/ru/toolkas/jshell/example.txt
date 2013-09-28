@@ -1,13 +1,1 @@
-print(value: "Enter x:");
-readNumber(out: "x");
-
-if(x > 10) {
-    print(value: "x is greater 10");
-} else {
-    print(value: "x is not greater 10");
-}
-
-print(value: "Enter y:");
-readNumber(out: "y");
-
-print(value: "y = " ^ y);
+print("A", "B", "C");

@@ -5,7 +5,6 @@ statement
     |   'if' parExpression statement ('else' statement)?
     |   'while' parExpression statement
     |   expression  ';'
-    |   functionInvocation ';'
     |   ';'
     ;
 
@@ -18,13 +17,8 @@ functionInvocation
     ;
 
 arguments
-    :   (IDENTIFIER ':' expression) (',' IDENTIFIER ':' expression)*
+    :   expression (',' expression)*
     ;
-
-nameValues
-    :   IDENTIFIER ':' expression
-    ;
-
 
 parExpression
     :   '(' expression ')'
@@ -98,6 +92,7 @@ primary
     :   parExpression
     |   IDENTIFIER
     |   literal
+    |   functionInvocation
     ;
 
 literal

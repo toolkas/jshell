@@ -2,12 +2,8 @@ package ru.toolkas.jshell.runtime;
 
 import ru.toolkas.jshell.lang.Function;
 import ru.toolkas.jshell.lang.Value;
-import ru.toolkas.jshell.lang.function.OpenFile;
-import ru.toolkas.jshell.lang.function.PrintFunction;
 import ru.toolkas.jshell.lang.BooleanValue;
 import ru.toolkas.jshell.lang.NullValue;
-import ru.toolkas.jshell.lang.function.ReadNumber;
-import ru.toolkas.jshell.lang.function.ReadString;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,12 +18,17 @@ public class JShellContext {
         constants.put("true", new BooleanValue(true));
         constants.put("false", new BooleanValue(false));
 
-        functions.put("print", new PrintFunction());
-
-        functions.put("readNumber", new ReadNumber());
-        functions.put("readString", new ReadString());
-
-        functions.put("openFile", new OpenFile());
+        functions.put("print", new Function() {
+            @Override
+            public Value execute(Value... args) throws Exception {
+                if (args != null) {
+                    for (Value value : args) {
+                        System.out.println(value);
+                    }
+                }
+                return null;
+            }
+        });
     }
 
     public Value getValue(final String name) {

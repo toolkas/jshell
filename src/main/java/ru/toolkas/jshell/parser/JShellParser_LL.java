@@ -7,6 +7,7 @@ import ru.toolkas.jshell.lang.Value;
 import ru.toolkas.jshell.lexer.Token;
 import ru.toolkas.jshell.lexer.TokenType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +53,6 @@ public class JShellParser_LL extends AbstractJShellParser {
         } else if (check(tokens, TokenType.BRACE, "{")) {
             rollback(1);
             return block(tokens);
-        } else if ((result = consume(tokens, new FunctionInvocationAction())).ok()) {
-            return (Statement) result.value();
         }
         throw new JShellParseException("no statement found at " + get(tokens, 0));
     }
@@ -72,48 +71,33 @@ public class JShellParser_LL extends AbstractJShellParser {
         return block;
     }
 
-    private Statement functionInvocation(final List<Token> tokens) throws JShellParseException {
+    private Expression functionInvocation(final List<Token> tokens) throws JShellParseException {
         consume(tokens, TokenType.WORD);
         consume(tokens, TokenType.BRACKET, "(");
 
         String functionName = last(tokens, 2).getValue();
 
         if (check(tokens, TokenType.BRACKET, ")")) {
-            return new FunctionStatement(functionName);
+            return new FunctionInvocationExpression(functionName);
         }
 
-        final Map<String, Expression> arguments = new HashMap<String, Expression>();
+        final List<Expression> arguments = new ArrayList<Expression>();
         arguments(tokens, arguments);
         consume(tokens, TokenType.BRACKET, ")");
 
-        return new FunctionStatement(functionName, arguments);
+        return new FunctionInvocationExpression(functionName, arguments);
     }
 
-    private void arguments(List<Token> tokens, Map<String, Expression> in) throws JShellParseException {
-        if (check(tokens, TokenType.WORD)) {
-            String identifier = last(tokens, 1).getValue();
+    private void arguments(List<Token> tokens, List<Expression> arguments) throws JShellParseException {
+        Result<Expression> result;
+        if ((result = consume(tokens, new ArgumentAction())).ok()) {
+            Expression expression = result.value();
+            arguments.add(expression);
+        }
 
-            consume(tokens, TokenType.SEPARATOR, ":");
-
+        while (check(tokens, TokenType.SEPARATOR, ",")) {
             Expression expression = expression(tokens);
-
-            in.put(identifier, expression);
-
-            while (true) {
-                if (check(tokens, TokenType.SEPARATOR, ",")) {
-                    consume(tokens, TokenType.WORD);
-
-                    String id = last(tokens, 1).getValue();
-
-                    consume(tokens, TokenType.SEPARATOR, ":");
-
-                    Expression expr = expression(tokens);
-
-                    in.put(id, expr);
-                    continue;
-                }
-                break;
-            }
+            arguments.add(expression);
         }
     }
 
@@ -282,10 +266,18 @@ public class JShellParser_LL extends AbstractJShellParser {
     }
 
     private Expression primary(final List<Token> tokens) throws JShellParseException {
+        Result<Expression> result;
         if (check(tokens, TokenType.BRACKET, "(")) {
             rollback(1);
 
             return parExpression(tokens);
+        } else if ((result = consume(tokens, new Action<Expression>() {
+            @Override
+            public Expression execute(List<Token> tokens) throws JShellParseException {
+                return functionInvocation(tokens);
+            }
+        })).ok()) {
+            return result.value();
         } else if (check(tokens, TokenType.WORD)) {
             final String identifier = last(tokens, 1).getValue();
 
@@ -317,28 +309,25 @@ public class JShellParser_LL extends AbstractJShellParser {
         return expression;
     }
 
-    private class ExpressionAction implements Action {
+    private class ExpressionAction implements Action<Expression> {
         @Override
-        public Object execute(List<Token> tokens) throws JShellParseException {
+        public Expression execute(List<Token> tokens) throws JShellParseException {
             Expression expression = expression(tokens);
             consume(tokens, TokenType.SEPARATOR, ";");
             return expression;
         }
     }
 
-    private class FunctionInvocationAction implements Action {
+    private class ArgumentAction implements Action<Expression> {
         @Override
-        public Object execute(List<Token> tokens) throws JShellParseException {
-            Statement statement = functionInvocation(tokens);
-            consume(tokens, TokenType.SEPARATOR, ";");
-
-            return statement;
+        public Expression execute(List<Token> tokens) throws JShellParseException {
+            return expression(tokens);
         }
     }
 
-    private class StatementAction implements Action {
+    private class StatementAction implements Action<Statement> {
         @Override
-        public Object execute(List<Token> tokens) throws JShellParseException {
+        public Statement execute(List<Token> tokens) throws JShellParseException {
             return statement(tokens);
         }
     }
